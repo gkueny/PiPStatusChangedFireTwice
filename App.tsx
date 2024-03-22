@@ -1,117 +1,83 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, {useCallback, useRef, useState} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import Video, {
+  OnPictureInPictureStatusChangedData,
+  OnVideoErrorData,
+  ResizeMode,
+  VideoRef,
+} from 'react-native-video';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+function App(): React.JSX.Element {
+  const videoRef = useRef<VideoRef>();
+  const [PiP, setPiP] = useState<boolean>(false);
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  const onError = useCallback((error: OnVideoErrorData) => {
+    console.log({error});
+  }, []);
+  const onPictureInPictureStatusChanged = useCallback(
+    (data: OnPictureInPictureStatusChangedData) => {
+      console.log({data});
+      if (!data.isActive) {
+        setPiP(false);
+      }
+    },
+    [],
+  );
+  const onRestoreUserInterfaceForPictureInPictureStop = useCallback(() => {
+    console.log('onRestoreUserInterfaceForPictureInPictureStop');
+    videoRef.current?.restoreUserInterfaceForPictureInPictureStopCompleted(
+      true,
+    );
+  }, []);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  console.log({PiP});
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={styles.container}>
+      <View style={styles.videoContainer}>
+        <Video
+          ref={videoRef}
+          source={{
+            uri: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          }}
+          onError={onError}
+          style={styles.backgroundVideo}
+          resizeMode={ResizeMode.CONTAIN}
+          pictureInPicture={PiP}
+          controls={false}
+          onPictureInPictureStatusChanged={onPictureInPictureStatusChanged}
+          onRestoreUserInterfaceForPictureInPictureStop={
+            onRestoreUserInterfaceForPictureInPictureStop
+          }
+        />
+      </View>
+      <View>
+        <TouchableOpacity
+          onPress={() => {
+            setPiP(true);
+          }}>
+          <Text>PiP</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  videoContainer: {
+    width: '100%',
+    height: 500,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  backgroundVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
   },
 });
 
